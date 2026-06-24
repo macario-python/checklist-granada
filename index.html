@@ -68,8 +68,12 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;padd
 .ic4{background:rgba(155,143,245,0.12);}
 .ic5{background:rgba(224,85,85,0.12);}
 .stitle{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;flex:1;}
-.sbadge{font-size:11px;font-weight:600;color:var(--mut);background:var(--surf2);border-radius:99px;padding:3px 9px;}
-.sbadge.done{color:var(--grn);background:rgba(76,175,125,0.12);}
+.sbadges{display:flex;gap:5px;align-items:center;}
+.sbadge{font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;}
+.sbadge-ok{color:var(--grn);background:rgba(76,175,125,0.15);}
+.sbadge-pend{color:#f0a030;background:rgba(240,160,48,0.13);}
+.sbadge-pend.zero{display:none;}
+.sbadge-ok.allok{color:var(--grn);}
 .chev{color:var(--mut);font-size:12px;transition:transform 0.2s;}
 .sec.col .chev{transform:rotate(-90deg);}
 .sec.col .sitems{display:none;}
@@ -275,10 +279,10 @@ var D = {
     {id:"c1", t:"Cozinha", ic:"ic1", setor:"cozinha", items:[
       "Ligar Gas e enviar foto",
       "Higienizacao das maos",
-      "Touca",
+      "Ligar fritadeira a 220 graus",
       "Luva termica",
       "Fazer higienizacao inicial da cozinha",
-      "Ligar a chapa",
+      "Cortar alface (caixa branca grande)",
       "Ligar fritadeira a 220 graus",
       "Ligar fritadeira pequena",
       "Fritar uma caixa de bacon (caixa branca grande)",
@@ -324,11 +328,11 @@ var D = {
       "Conferir estoque de caixinhas de batata"
     ]},
     {id:"c4", t:"Bar", ic:"ic4", setor:"bar", items:[
-      "Verificar geladeiras e anotar temperaturas",
+      "Cortar limao e laranja",
       "Conferir etiquetas de produtos",
       "Verificar estoque e estado das frutas",
       "Verificar maquina de gelo",
-      "Cortar limao e laranja",
+      "Corta limão e laranja",
       "Conferir copos",
       "Conferir estoque de bebidas",
       "Verificar maquina de cafe (limpeza, graos e agua)",
@@ -346,8 +350,8 @@ var D = {
       "Limpar caixas dos paes",
       "Guardar molhos abertos em sacos especificos e etiquetar",
       "Lavar o chao (cozinha)",
-      "Lavar lixeira e trocar os sacos",
       "Lavar calcada frente ao delivery",
+      "Lavar lixeira e trocar os sacos",
       "Desligar coifa e equipamentos",
       "Apagar as luzes e fechar o estabelecimento",
       "Ligar o alarme"
@@ -363,11 +367,10 @@ var D = {
       "Recolher abridor com os garcons",
       "Carregar maquinas de cartao",
       "Verificar chopp",
-      "Desligar ventiladores",
+      "Desligar Iluminacao (interna e externa)",
       "Desligar maquinas",
       "Desligar PC servidor",
       "Fechar o caixa e enviar relatorios",
-      "Desligar Iluminacao (interna e externa)",
     ]},
     {id:"c3", t:"Delivery", ic:"ic3", setor:"delivery", items:[
       "Fechar o caixa",
@@ -379,7 +382,7 @@ var D = {
       "Dewsligar a luz",
       "Fechar a porta do delivery",
       "Subir celulares e colocar pra carregar",
-      "Subir papeis de pedidos"
+      "Abastecer as geladeiras",
     ]},
     {id:"c4", t:"Bar", ic:"ic4", setor:"bar", items:[
       "Desligar os equipamentos",
@@ -462,7 +465,10 @@ function renderCk() {
       var ck = st[s.id][ii] ? " ck" : "";
       rows += "<div class='item" + ck + "' id='i-" + s.id + "-" + ii + "' onclick='tog(\"" + s.id + "\"," + ii + ")'><div class='chk'><span class='chkx'>&#10003;</span></div><span class='ilabel'>" + s.items[ii] + "</span></div>";
     }
-    el.innerHTML = "<div class='shead' onclick='colSec(\"" + s.id + "\")'><div class='sicon " + s.ic + "'></div><div class='stitle'>" + s.t + "</div><span class='sbadge" + bd + "' id='b-" + s.id + "'>" + done + "/" + tot + "</span><span class='chev'>&#9660;</span></div><div class='sitems'>" + rows + "</div>";
+    var pend = tot - done;
+    var badgeOk = "<span class='sbadge sbadge-ok' id='b-ok-" + s.id + "'>&#10003; " + done + "</span>";
+    var badgePend = "<span class='sbadge sbadge-pend" + (pend === 0 ? " zero" : "") + "' id='b-pend-" + s.id + "'>&#9679; " + pend + " pend.</span>";
+    el.innerHTML = "<div class='shead' onclick='colSec(\"" + s.id + "\")'><div class='sicon " + s.ic + "'></div><div class='stitle'>" + s.t + "</div><div class='sbadges'>" + badgeOk + badgePend + "</div><span class='chev'>&#9660;</span></div><div class='sitems'>" + rows + "</div>";
     c.appendChild(el);
   }
 }
@@ -482,9 +488,11 @@ function updBadge(sid) {
   if (!s) return;
   var done = 0;
   for (var k in st[sid]) { if (st[sid][k]) done++; }
-  var b = document.getElementById("b-" + sid);
-  b.textContent = done + "/" + s.items.length;
-  b.className = "sbadge" + (done === s.items.length ? " done" : "");
+  var pend = s.items.length - done;
+  var bok = document.getElementById("b-ok-" + sid);
+  var bpend = document.getElementById("b-pend-" + sid);
+  if (bok) bok.textContent = "\u2713 " + done;
+  if (bpend) { bpend.textContent = "\u25cf " + pend + " pend."; bpend.classList.toggle("zero", pend === 0); }
 }
 
 function updPct() {
